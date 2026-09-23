@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ThinkLab</title>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --card: #161616;
+    --border: #2a2a2a;
+    --text: #e8e8e8;
+    --muted: #8a8a8a;
+    --accent: #4a9eff;
+    --red: #ff5d5d;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 20;
+  }
+
+  .brand {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  .gear {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 0;
+  }
+
+  .gear:hover {
+    color: var(--text);
+    border-color: #3a3a3a;
+  }
+
+  .gear svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+  }
+
+  /* ---------- Main ---------- */
+  .wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .preset-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+
+  .preset-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  textarea#prompt {
+    width: 100%;
+    min-height: 130px;
+    resize: vertical;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 16px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    outline: none;
+  }
+
+  textarea#prompt::placeholder {
+    color: var(--muted);
+  }
+
+  textarea#prompt:focus {
+    border-color: var(--accent);
+  }
+
+  .modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 18px 0;
+  }
+
+  .mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    color: var(--text);
+  }
+
+  .mode-toggle input {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    background: var(--card);
+    cursor: pointer;
+    position: relative;
+    margin: 0;
+    flex: 0 0 auto;
+  }
+
+  .mode-toggle input:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .mode-toggle input:checked::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 4px;
+    height: 9px;
+    border: solid #0d0d0d;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  .run-btn {
+    width: 100%;
+    padding: 14px 20px;
+    background: var(--accent);
+    color: #06131f;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .run-btn:hover:not(:disabled) {
+    background: #63abff;
+  }
+
+  .run-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  /* ---------- Results ---------- */
+  #results {
+    margin-top: 24px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  @media (min-width: 901px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 64px 24px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .card[data-mode="default"] { border-top: 3px solid #9a9a9a; }
+  .card[data-mode="low"]     { border-top: 3px solid #4a9eff; }
+  .card[data-mode="high"]    { border-top: 3px solid #ff9f43; }
+  .card[data-mode="max"]     { border-top: 3px solid #ff5d5d; }
+
+  .card:hover {
+    border-left-color: #3a3a3a;
+    border-right-color: #3a3a3a;
+    border-bottom-color: #3a3a3a;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .card-mode {
+    font-weight: 700;
+    font-size: 15px;
+    text-transform: capitalize;
+  }
+
+  .pill {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 11px;
+    border-radius: 999px;
+    color: #0d0d0d;
+  }
+
+  .pill.default { background: #9a9a9a; }
+  .pill.low     { background: #4a9eff; }
+  .pill.high    { background: #ff9f43; }
+  .pill.max     { background: #ff5d5d; }
+
+  .stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .stat {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .stat .label {
+    color: var(--muted);
+  }
+
+  .stat .value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--text);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0 0 16px 0;
+  }
+
+  .response {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+    flex: 1 1 auto;
+    min-height: 24px;
+  }
+
+  .response .num {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.95em;
+  }
+
+  .response.error {
+    color: var(--red);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+  }
+
+  .response.pending {
+    color: var(--muted);
+  }
+
+  .card-foot {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: inherit;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+
+  .copy-btn:hover {
+    color: var(--text);
+    border-color: #3a3a3a;
+  }
+
+  /* ---------- Settings panel ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 30;
+  }
+
+  .overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 340px;
+    max-width: 90vw;
+    background: var(--card);
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    z-index: 40;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .panel.open {
+    transform: translateX(0);
+  }
+
+  .panel h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .panel label {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .panel input[type="password"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    outline: none;
+  }
+
+  .panel input[type="password"]:focus {
+    border-color: var(--accent);
+  }
+
+  .panel .save-btn {
+    background: var(--accent);
+    color: #06131f;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .panel .save-btn:hover {
+    background: #63abff;
+  }
+
+  .panel .link {
+    color: var(--accent);
+    font-size: 13px;
+    text-decoration: none;
+    width: fit-content;
+  }
+
+  .panel .link:hover {
+    text-decoration: underline;
+  }
+
+  .panel .panel-error {
+    color: var(--red);
+    font-size: 13px;
+    min-height: 18px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 50;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ---------- Markdown + KaTeX ---------- */
+  .response.markdown {
+    white-space: normal;
+  }
+
+  .response.markdown > :first-child {
+    margin-top: 0;
+  }
+
+  .response.markdown > :last-child {
+    margin-bottom: 0;
+  }
+
+  .response.markdown p {
+    margin: 0 0 12px 0;
+  }
+
+  .response.markdown h1,
+  .response.markdown h2,
+  .response.markdown h3,
+  .response.markdown h4 {
+    margin: 18px 0 10px 0;
+    line-height: 1.35;
+  }
+
+  .response.markdown h1 { font-size: 1.35em; }
+  .response.markdown h2 { font-size: 1.2em; }
+  .response.markdown h3 { font-size: 1.08em; }
+
+  .response.markdown ul,
+  .response.markdown ol {
+    margin: 0 0 12px 0;
+    padding-left: 22px;
+  }
+
+  .response.markdown li {
+    margin: 4px 0;
+  }
+
+  .response.markdown a {
+    color: var(--accent);
+  }
+
+  .response.markdown code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9em;
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  .response.markdown pre {
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    margin: 0 0 12px 0;
+  }
+
+  .response.markdown pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.85em;
+  }
+
+  .response.markdown blockquote {
+    margin: 0 0 12px 0;
+    padding-left: 12px;
+    border-left: 3px solid var(--border);
+    color: var(--muted);
+  }
+
+  .response.markdown table {
+    border-collapse: collapse;
+    margin: 0 0 12px 0;
+    width: 100%;
+  }
+
+  .response.markdown th,
+  .response.markdown td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+  }
+
+  .response.markdown hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+
+  .response .katex-pending {
+    display: inline;
+  }
+
+  .response .katex-display {
+    margin: 12px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">ThinkLab</div>
+    <button class="gear" id="gearBtn" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+  </header>
+
+  <main class="wrap">
+    <div class="presets">
+      <button class="preset-btn" type="button" data-preset="math">Math puzzle</button>
+      <button class="preset-btn" type="button" data-preset="logic">Logic riddle</button>
+      <button class="preset-btn" type="button" data-preset="code">Code question</button>
+    </div>
+    <textarea id="prompt" placeholder="Ask something that requires reasoning, like a math problem or a logic puzzle."></textarea>
+
+    <div class="modes" id="modes">
+      <label class="mode-toggle"><input type="checkbox" value="default" checked /> default</label>
+      <label class="mode-toggle"><input type="checkbox" value="low" /> low</label>
+      <label class="mode-toggle"><input type="checkbox" value="high" /> high</label>
+      <label class="mode-toggle"><input type="checkbox" value="max" /> max</label>
+    </div>
+
+    <button class="run-btn" id="runBtn">Run comparison</button>
+
+    <section id="results">
+      <div class="empty" id="emptyState">Select modes, write a prompt, hit run. Your first comparison will appear here.</div>
+    </section>
+  </main>
+
+  <div class="overlay" id="overlay"></div>
+
+  <aside class="panel" id="settingsPanel" aria-hidden="true">
+    <h2>Settings</h2>
+    <label for="apiKey">DeepSeek API key</label>
+    <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" />
+    <button class="save-btn" id="saveKeyBtn">Save</button>
+    <a class="link" href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer">Get a key</a>
+    <div class="panel-error" id="panelError"></div>
+  </aside>
+
+  <div class="toast" id="toast">Copied</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var KEY_STORAGE = "deepseek_key";
+  var API_URL = "https://api.deepseek.com/chat/completions";
+  var MODES = ["default", "low", "high", "max"];
+  var PRESETS = {
+    math: "A bat and a ball cost $1.10. The bat costs $1.00 more than the ball. How much does the ball cost?",
+    logic: "Three boxes are labeled Apples, Oranges, and Apples and Oranges. All labels are wrong. You pick one fruit from one box. Which box do you pick from to fix all labels?",
+    code: "Write a JavaScript function that returns the longest palindromic substring in a string. Explain the time complexity."
+  };
+
+  var promptEl = document.getElementById("prompt");
+  var modesEl = document.getElementById("modes");
+  var runBtn = document.getElementById("runBtn");
+  var resultsEl = document.getElementById("results");
+  var emptyState = document.getElementById("emptyState");
+  var gearBtn = document.getElementById("gearBtn");
+  var overlay = document.getElementById("overlay");
+  var panel = document.getElementById("settingsPanel");
+  var apiKeyEl = document.getElementById("apiKey");
+  var saveKeyBtn = document.getElementById("saveKeyBtn");
+  var panelError = document.getElementById("panelError");
+  var toast = document.getElementById("toast");
+
+  var toastTimer = null;
+
+  if (window.marked && typeof window.marked.use === "function") {
+    window.marked.use({
+      extensions: [
+        {
+          name: "mathBlock",
+          level: "block",
+          start: function (src) {
+            return src.indexOf("\\[");
+          },
+          tokenizer: function (src) {
+            var match = src.match(/^\\\[([\s\S]+?)\\\]/);
+            if (match) {
+              return { type: "mathBlock", raw: match[0], text: match[1] };
+            }
+            return undefined;
+          },
+          renderer: function (token) {
+            return '<div class="katex-pending">\\[' + token.text + '\\]</div>';
+          }
+        },
+        {
+          name: "mathInline",
+          level: "inline",
+          start: function (src) {
+            return src.indexOf("\\(");
+          },
+          tokenizer: function (src) {
+            var match = src.match(/^\\\(([\s\S]+?)\\\)/);
+            if (match) {
+              return { type: "mathInline", raw: match[0], text: match[1] };
+            }
+            return undefined;
+          },
+          renderer: function (token) {
+            return '<span class="katex-pending">\\(' + token.text + '\\)</span>';
+          }
+        }
+      ]
+    });
+  }
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toast.classList.remove("show");
+    }, 1600);
+  }
+
+  function openPanel() {
+    panel.classList.add("open");
+    panel.setAttribute("aria-hidden", "false");
+    overlay.classList.add("open");
+  }
+
+  function closePanel() {
+    panel.classList.remove("open");
+    panel.setAttribute("aria-hidden", "true");
+    overlay.classList.remove("open");
+  }
+
+  function getKey() {
+    try {
+      return localStorage.getItem(KEY_STORAGE) || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function saveKey(value) {
+    try {
+      localStorage.setItem(KEY_STORAGE, value);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function selectedModes() {
+    var boxes = modesEl.querySelectorAll("input[type=checkbox]");
+    var out = [];
+    for (var i = 0; i < boxes.length; i++) {
+      if (boxes[i].checked) out.push(boxes[i].value);
+    }
+    return out;
+  }
+
+  function buildCard(mode) {
+    var card = document.createElement("div");
+    card.className = "card";
+    card.dataset.mode = mode;
+
+    var head = document.createElement("div");
+    head.className = "card-head";
+    var name = document.createElement("span");
+    name.className = "card-mode";
+    name.textContent = mode;
+    var pill = document.createElement("span");
+    pill.className = "pill " + mode;
+    pill.textContent = mode;
+    head.appendChild(name);
+    head.appendChild(pill);
+
+    var stats = document.createElement("div");
+    stats.className = "stats";
+    stats.appendChild(makeStat("Time", "time", "\u2014"));
+    stats.appendChild(makeStat("Prompt tokens", "prompt", "\u2014"));
+    stats.appendChild(makeStat("Completion tokens", "completion", "\u2014"));
+
+    var divider = document.createElement("div");
+    divider.className = "divider";
+
+    var response = document.createElement("div");
+    response.className = "response pending";
+    response.textContent = "Waiting for response\u2026";
+
+    var foot = document.createElement("div");
+    foot.className = "card-foot";
+    var copyBtn = document.createElement("button");
+    copyBtn.className = "copy-btn";
+    copyBtn.textContent = "Copy";
+    copyBtn.disabled = true;
+    copyBtn.addEventListener("click", function () {
+      var text = response.dataset.raw || "";
+      if (!text) return;
+      copyText(text, function (ok) {
+        showToast(ok ? "Copied" : "Copy failed");
+      });
+    });
+    foot.appendChild(copyBtn);
+
+    card.appendChild(head);
+    card.appendChild(stats);
+    card.appendChild(divider);
+    card.appendChild(response);
+    card.appendChild(foot);
+
+    return card;
+  }
+
+  function makeStat(label, key, value) {
+    var row = document.createElement("div");
+    row.className = "stat";
+    var l = document.createElement("span");
+    l.className = "label";
+    l.textContent = label;
+    var v = document.createElement("span");
+    v.className = "value";
+    v.dataset.stat = key;
+    v.textContent = value;
+    row.appendChild(l);
+    row.appendChild(v);
+    return row;
+  }
+
+  function setStat(card, key, value) {
+    var el = card.querySelector('[data-stat="' + key + '"]');
+    if (el) el.textContent = value;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function parseMarkdown(text) {
+    if (window.marked && typeof window.marked.parse === "function") {
+      try {
+        return window.marked.parse(text);
+      } catch (e) {
+        return escapeHtml(text);
+      }
+    }
+    return escapeHtml(text);
+  }
+
+  function renderMath(container) {
+    var pending = container.querySelectorAll(".katex-pending");
+    if (!pending.length) return;
+    if (typeof window.renderMathInElement !== "function") return;
+    try {
+      window.renderMathInElement(container, {
+        delimiters: [
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true }
+        ],
+        throwOnError: false
+      });
+    } catch (e) {
+      /* leave raw delimiters in place if KaTeX cannot render */
+    }
+  }
+
+  function setResponse(card, text) {
+    var response = card.querySelector(".response");
+    response.classList.remove("pending", "error");
+    response.classList.add("markdown");
+    response.dataset.raw = text;
+    response.innerHTML = parseMarkdown(text);
+    renderMath(card);
+    var copyBtn = card.querySelector(".copy-btn");
+    copyBtn.disabled = false;
+  }
+
+  function setError(card, message) {
+    var response = card.querySelector(".response");
+    response.classList.remove("pending", "markdown");
+    response.classList.add("error");
+    response.dataset.raw = message;
+    response.textContent = message;
+    var copyBtn = card.querySelector(".copy-btn");
+    copyBtn.disabled = false;
+  }
+
+  function copyText(text, cb) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () { cb(true); },
+        function () { cb(fallbackCopy(text)); }
+      );
+    } else {
+      cb(fallbackCopy(text));
+    }
+  }
+
+  function fallbackCopy(text) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function runMode(mode, prompt, key, card) {
+    var start = performance.now();
+    var body = {
+      model: "deepseek-chat",
+      messages: [{ role: "user", content: prompt }],
+      thinking_mode: mode,
+      stream: false
+    };
+
+    return fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + key
+      },
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      return res.text().then(function (raw) {
+        var data;
+        try {
+          data = JSON.parse(raw);
+        } catch (e) {
+          throw new Error("Invalid response (HTTP " + res.status + "): " + raw.slice(0, 300));
+        }
+        if (!res.ok) {
+          var msg = (data && data.error && data.error.message) || ("HTTP " + res.status);
+          throw new Error(msg);
+        }
+        if (data && data.error) {
+          throw new Error(data.error.message || "API error");
+        }
+        var elapsed = (performance.now() - start) / 1000;
+        var choice = data.choices && data.choices[0];
+        var text = choice && choice.message ? choice.message.content : "";
+        var usage = data.usage || {};
+        setStat(card, "time", elapsed.toFixed(2) + "s");
+        setStat(card, "prompt", (usage.prompt_tokens != null ? usage.prompt_tokens : "\u2014"));
+        setStat(card, "completion", (usage.completion_tokens != null ? usage.completion_tokens : "\u2014"));
+        setResponse(card, text || "(empty response)");
+      });
+    }).catch(function (err) {
+      var elapsed = (performance.now() - start) / 1000;
+      setStat(card, "time", elapsed.toFixed(2) + "s");
+      setError(card, "Error: " + (err && err.message ? err.message : String(err)));
+    });
+  }
+
+  function run() {
+    panelError.textContent = "";
+    var key = getKey();
+    if (!key) {
+      panelError.textContent = "Add your DeepSeek API key first.";
+      openPanel();
+      return;
+    }
+
+    var modes = selectedModes();
+    if (modes.length === 0) {
+      showToast("Select at least one mode");
+      return;
+    }
+
+    var prompt = promptEl.value.trim();
+    if (!prompt) {
+      promptEl.focus();
+      showToast("Write a prompt first");
+      return;
+    }
+
+    runBtn.disabled = true;
+    runBtn.textContent = "Running\u2026";
+
+    var grid = document.createElement("div");
+    grid.className = "grid";
+    var cards = {};
+    modes.forEach(function (mode) {
+      var card = buildCard(mode);
+      cards[mode] = card;
+      grid.appendChild(card);
+    });
+
+    resultsEl.innerHTML = "";
+    resultsEl.appendChild(grid);
+
+    var jobs = modes.map(function (mode) {
+      return runMode(mode, prompt, key, cards[mode]);
+    });
+
+    Promise.all(jobs).then(function () {
+      runBtn.disabled = false;
+      runBtn.textContent = "Run comparison";
+    });
+  }
+
+  gearBtn.addEventListener("click", function () {
+    if (panel.classList.contains("open")) {
+      closePanel();
+    } else {
+      openPanel();
+    }
+  });
+
+  overlay.addEventListener("click", closePanel);
+
+  saveKeyBtn.addEventListener("click", function () {
+    var val = apiKeyEl.value.trim();
+    if (!val) {
+      panelError.textContent = "Enter a key before saving.";
+      return;
+    }
+    if (saveKey(val)) {
+      panelError.textContent = "";
+      closePanel();
+      showToast("Key saved");
+    } else {
+      panelError.textContent = "Could not save key (storage unavailable).";
+    }
+  });
+
+  apiKeyEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") saveKeyBtn.click();
+  });
+
+  runBtn.addEventListener("click", run);
+
+  document.querySelectorAll(".preset-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = PRESETS[btn.dataset.preset];
+      if (text) {
+        promptEl.value = text;
+        promptEl.focus();
+      }
+    });
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && panel.classList.contains("open")) closePanel();
+  });
+
+  apiKeyEl.value = getKey();
+})();
+</script>
+</body>
+</html>
